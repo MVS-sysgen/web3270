@@ -1,0 +1,2 @@
+terminado==0.12.1
+tornado==6.1
