@@ -114,7 +114,7 @@ if not os.path.exists("{}/web3270.ini".format(args.config)):
     shutil.copy2("{}/web3270.ini".format(os.path.dirname(os.path.realpath(__file__))), args.config)
 
 print("[+] Using config: {}/web3270.ini".format(args.config))
-config = configparser.ConfigParser()
+config = configparser.ConfigParser(comment_prefixes = '/', allow_no_value = True)
 config.read("{}/web3270.ini".format(args.config))
 PASSWORD = None
 
@@ -126,8 +126,11 @@ if __name__ == '__main__':
     c3270 = ['c3270', '-secure', '-defaultfgbg']
 
     if not config['web']['secret']:
-        error = "'secret =' in {}/web3270.ini is blank. Set it to: {}".format(args.config, secrets.token_urlsafe())
-        raise ValueError(error)
+        config['web']['secret'] = secrets.token_urlsafe()
+        error = "[+] 'secret =' in {}/web3270.ini is blank. Setting it to: {}".format(args.config, config['web']['secret'])
+        print(error)
+        with open("{}/web3270.ini".format(args.config), 'w') as configfile:
+            config.write(configfile)
 
     if config['tn3270'].getboolean('selfsignedcert'):
         c3270.append('-noverifycert')
