@@ -24,6 +24,8 @@ The config file allows you to specify multiple options:
 * `model` tn3270 model type (2 through 5), default 4. See https://x3270.miraheze.org/wiki/3270_models for more details.
 * `useproxy` **yes**/**no** should a proxy be used to connect to tn3270 server
 * `proxystring` The proxy connection string *optional*.
+* `password` If set a login page will be displayed and the password set here will be required to load web3270 *optional*
+* `secret` The secret used to generate secure tokens. If not set the script will set a random one for you *optional*
 
 ## Script Arguments
 
