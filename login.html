@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>web3270</title>
+    <style>
+      @font-face {
+        font-family: '3270Regular';
+        src: url('3270-Regular.woff') format('woff');
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      html {
+        font-family: '3270Regular';
+        color:aliceblue;
+      }
+      body {background-color:#23272a;}
+      #terminal{
+        margin: auto;
+        width : 50%;
+
+      }
+      #bysof {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="text-align: Left;">
+    <span style="font-family: 3270Regular;font-size: 1.4em">
+<pre>
+██     ██  █████  ██████  ███    ██ ██ ███    ██  ██████  
+██     ██ ██   ██ ██   ██ ████   ██ ██ ████   ██ ██       
+██  █  ██ ███████ ██████  ██ ██  ██ ██ ██ ██  ██ ██   ███ 
+██ ███ ██ ██   ██ ██   ██ ██  ██ ██ ██ ██  ██ ██ ██    ██ 
+ ███ ███  ██   ██ ██   ██ ██   ████ ██ ██   ████  ██████</pre>
+ &nbsp;&nbsp;&nbsp;&nbsp;This system is protect by a secret code.<br><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;Enter it below to gain access.<br><br>
+        <form action="/login" method="post">
+            &nbsp;&nbsp;&nbsp;&nbsp;Secret code: <input type="password" name="passed">&nbsp;&nbsp;<input type="submit" value="Go">
+        </form>
+    
+    </span>
+    <div id="bysof">By: Soldier of FORTRAN</div>
+  </body>
+</html>

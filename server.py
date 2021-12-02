@@ -6,19 +6,48 @@ import signal
 import configparser
 import argparse
 import shutil
+import random
+import secrets
 
-class TerminalPageHandler(tornado.web.RequestHandler):
+
+
+class BaseHandler(tornado.web.RequestHandler):
+    def get_current_user(self):
+        return self.get_secure_cookie("user")
+
+class TerminalPageHandler(BaseHandler):
+
     def initialize(self, width=80,height=45):
         self.width = width
         self.height = height
 
     def get(self):
+        print("[+] User logging in:", self.current_user)
+        if PASSWORD and not self.current_user:
+            self.redirect("/login")
+            return
+        
         return self.render(
                            "index.html", 
                            width=self.width,
                            height=self.height,
                            ws_url_path="/websocket"
                           )
+
+class LoginHandler(BaseHandler):
+    def get(self):
+        # self.write('<html><body><form action="/login" method="post">'
+        #            'Secret code: <input type="password" name="name">'
+        #            '<input type="submit" value="Go">'
+        #            '</form></body></html>')
+        self.render('login.html')
+
+    def post(self):
+        if self.get_argument("passed") == PASSWORD:
+            self.set_secure_cookie("user", secrets.token_urlsafe())
+            self.redirect("/")
+        else:
+            self.redirect("/login")
 
 class Unique3270Manager(TermManagerBase):
     """Give each websocket a unique terminal to use."""
@@ -54,6 +83,14 @@ parser = argparse.ArgumentParser(description='web3270 - Web based front end to c
 parser.add_argument('--config',help='web3270 Config folder',default=os.path.dirname(os.path.realpath(__file__)))
 parser.add_argument('--certs',help='web3270 TLS Certificates folder',default=os.path.dirname(os.path.realpath(__file__)))
 args = parser.parse_args()
+if not os.path.exists("{}/web3270.ini".format(args.config)):
+    print("[+] {}/web3270.ini does not exist, copying".format(args.config))
+    shutil.copy2("{}/web3270.ini".format(os.path.dirname(os.path.realpath(__file__))), args.config)
+
+print("[+] Using config: {}/web3270.ini".format(args.config))
+config = configparser.ConfigParser()
+config.read("{}/web3270.ini".format(args.config))
+PASSWORD = None
 
 if __name__ == '__main__':
     print("[+] Starting Web server")
@@ -62,12 +99,10 @@ if __name__ == '__main__':
     width = 80
     c3270 = ['c3270', '-secure', '-defaultfgbg']
 
-    if not os.path.exists("{}/web3270.ini".format(args.config)):
-        shutil.copy2("{}/web3270.ini".format(os.path.dirname(os.path.realpath(__file__))), args.config)
-   
-    print("[+] Using config: {}/web3270.ini".format(args.config))
-    config = configparser.ConfigParser()
-    config.read("{}/web3270.ini".format(args.config))
+    if not config['web']['secret']:
+        error = "'secret =' in {}/web3270.ini is blank. Set it to: {}".format(args.config, secrets.token_urlsafe())
+        raise ValueError(error)
+
     if config['tn3270'].getboolean('selfsignedcert'):
         c3270.append('-noverifycert')
 
@@ -105,11 +140,16 @@ if __name__ == '__main__':
     term_manager = Unique3270Manager(theight=height,twidth=width,shell_command=c3270)
     handlers = [
                 (r"/websocket", TermSocket, {'term_manager': term_manager}),
-                (r"/", TerminalPageHandler),
-                (r"/(.*)", tornado.web.StaticFileHandler, {'path':'.'}),
+                (r"/", TerminalPageHandler)
                ]
-    # (r"/()", tornado.web.StaticFileHandler, {'path':'index.html'}),               
-    app = tornado.web.Application(handlers)
+    # if the password field in the ini file is uncommented add the login handler
+    if 'password' in config['web']:
+        PASSWORD = config['web']['password']
+        print("[+] Password set to {}".format(PASSWORD))
+        handlers.append((r"/login", LoginHandler))
+
+    handlers.append((r"/(.*)", tornado.web.StaticFileHandler, {'path':'.'}))  
+    app = tornado.web.Application(handlers, cookie_secret=config['web']['secret'])
     if config['web'].getboolean('tls'):
         csr = "{}/ca.csr".format(args.certs)
         key = "{}/ca.key".format(args.certs)
